@@ -1,0 +1,103 @@
+function mx_rect(name,coord,sz,material,mesh_order,refractive_index)    
+{
+    addrect;
+    set('name',name);
+    set('x',coord(1));
+    set('y',coord(2));
+    set('z',coord(3));
+    set('x span',sz(1));
+    set('y span',sz(2));
+    set('z span',sz(3));
+    
+    set('material',material);
+    
+    set('override mesh order from material database',1);
+    set('mesh order',mesh_order);
+    
+    if (refractive_index>0)
+        {
+         set('index',refractive_index);
+            }
+}
+
+function mx_ring(name,coord,height,radius,theta,material,mesh_order,refractive_index)
+{
+    addring;
+    set('name',name);
+    set('x',coord(1));
+    set('y',coord(2));
+    set('z',coord(3));
+    set('z span',height);
+    set('outer radius',max(radius));    
+    set('inner radius',min(radius)); 
+    set('theta start',theta(1));   
+    set('theta stop',theta(2));   
+    
+    set('material',material);
+    
+    set('override mesh order from material database',1);
+    set('mesh order',mesh_order);
+    
+    if (refractive_index>0)
+        {
+         set('index',refractive_index);
+            }
+    
+}
+
+function mx_poly(name,coord,vtx,height,material,mesh_order,refractive_index)
+{
+    addpoly;
+    set('name',name);
+    set('x',coord(1));
+    set('y',coord(2));
+    set('z',coord(3));
+    set('vertices',vtx);
+    set('z span',height);
+    
+    set('material',material);
+    
+    set('override mesh order from material database',1);
+    set('mesh order',mesh_order);
+    
+    if (refractive_index>0)
+        {
+         set('index',refractive_index);
+            }
+    
+    }
+
+    
+    
+    
+function mx_power_monitor(name,coord,sz,diretion)
+{
+    addpower;
+    set('name',name);
+    set('x',coord(1));
+    set('y',coord(2));
+    set('z',coord(3));
+    
+    if (diretion==1)
+    {   
+        set('monitor type','2D X-normal');
+        set('y span',sz(2));
+        set('z span',sz(3));
+        }
+        
+    if (diretion==2)
+    {   
+        set('monitor type','2D Y-normal');
+        set('x span',sz(1));
+        set('z span',sz(3));
+        }
+        
+    if (diretion==3)
+    {   
+        set('monitor type','2D Z-normal');
+        set('x span',sz(1));
+        set('y span',sz(2));
+        }
+}
+
+

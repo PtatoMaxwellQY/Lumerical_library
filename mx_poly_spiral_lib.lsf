@@ -1,0 +1,103 @@
+## Generate a spiral line ##
+function mx_poly_spiral(r,theta,coord,order,para){
+    #UNTITLED2 Summary of this function goes here
+    #   Detailed explanation goes here
+
+    #matlabput(r,theta,coord,order,para);
+    #matlab("curve = mx_poly_spiral(r,theta,coord,order,para);");
+    #matlabget(curve);
+    #return curve;
+    dL = para.dL;
+    r_init = r(1);
+    r_end = r(2);
+    theta_init = theta(1);
+    theta_end = theta(2);
+    x_init = coord(1);
+    y_init = coord(2);
+    
+    K0 = 1/r_init;
+    K1 = 1/r_end;
+    
+    L0 = abs(theta_end - theta_init)/(K0+(K1-K0)*order/(order+1));
+    
+    L = [0:dL:L0];
+    K = K0 + (K1 - K0)/L0^order * (L0^order - abs(L-L0)^order);
+    
+    R = 1/K;
+    R = (R<=para.R_max)*R + (R>para.R_max)*para.R_max*ones(length(R),1);
+    direction = sign(theta_end-theta_init);
+    dt = direction*dL/R;
+    #theta_temp = cumsum(dt)+theta_init;
+    theta_temp = dt;
+    
+    x=zeros(length(L),1)+x_init;
+    y=zeros(length(L),1)+y_init;
+    
+    
+    for (i=2;i<=length(L);i=i+1){
+        theta_temp(i) = theta_temp(i)+theta_temp(i-1);
+        cur_theta = theta_temp(i)+theta_init;
+        pre_theta = theta_temp(i-1)+theta_init;
+        x(i) = x(i-1) + direction* R(i)*( sin( cur_theta ) - sin(pre_theta ) );
+        y(i) = y(i-1) - direction* R(i)*( cos( cur_theta ) - cos( pre_theta ) );
+    
+    }
+    
+    curve = struct;
+    curve.x = [transpose(x(1:100:end)),x(end)];
+    curve.y = [transpose(y(1:100:end)),y(end)];
+    return curve;    
+    
+}
+
+function mx_wg_draw(curve,width){ 
+    #UNTITLED6 Summary of this function goes here
+    #   Detailed explanation goes here
+    
+    ## notice, width is a vector
+    
+    #matlabput(curve,width);
+    #matlab("wg = mx_wg_draw(curve,width);");
+    #matlabget(wg);
+    #return wg;
+    z = curve.x + 1i*curve.y; # complex points
+    #dz = diff(z); # direction of each point
+    dz = z(2:end) - z(1:end-1);    
+    dz = [transpose(dz),dz(end)];
+    dir_upper = -1i*real(dz)+imag(dz);
+    dir_down =  1i*real(dz)-imag(dz);
+    
+    p_upper = [z + dir_upper*width/2/abs(dir_upper)];
+    p_down = [z+ dir_down*width/2/abs(dir_down)];
+    
+    wg = struct;
+    wg.curve_inner = [real(p_upper);imag(p_upper)];
+    wg.curve_outer = [real(p_down);imag(p_down)]; 
+    
+    return wg;
+    
+}
+
+function mx_ring_coupler_wg(curve_var,para){
+    #UNTITLED6 Summary of this function goes here
+    #   Detailed explanation goes here
+        
+    matlabput(curve_var,para);
+    matlab("[wg,port_in,port_out] = mx_ring_coupler_wg(curve_var,para);");
+    matlabget(wg,port_in,port_out);
+    
+    #idx_gap = 100;
+    #wg.curve_inner = [wg.curve_inner(:,1:idx_gap:end),wg.curve_inner(:,end)];
+    #wg.curve_outer = [wg.curve_outer(:,1:idx_gap:end),wg.curve_outer(:,end)];
+    ## puuting to zero
+    
+    vtx_x = [wg.curve_inner(1,:),flip(wg.curve_outer(1,:),2)];
+    vtx_y = [wg.curve_inner(2,:),flip(wg.curve_outer(2,:),2)];
+    
+    vtx = [vtx_x;vtx_y]*1e-6;
+    result = struct;
+    result.vtx = vtx;
+    result.port_in = port_in;
+    result.port_out = port_out;
+    return result;  
+} 

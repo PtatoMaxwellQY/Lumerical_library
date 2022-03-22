@@ -1,0 +1,94 @@
+##### maxwell lib #####
+##### Function lib ####
+
+function get_system_time()
+{
+    fname="cur_time.txt";    # file name to store current time
+    cmd="echo %date:~0,4%%date:~5,2%%date:~8,2%_%time:~0,2%%time:~3,2%%time:~6,2%> "+fname; # system command to get current time and write to fname    
+    system(cmd);         # run command to get time and save to file
+    cur_time=read(fname);     # read time from file
+    cur_time = substring(cur_time,1,15);
+
+    return cur_time;
+}
+
+function mode_polar_select(polar_name,current_mode_name){
+
+if (polar_name=='TE') {
+    polar_select = 0.7;    
+    }
+    
+else if (polar_name=='TM') {
+    polar_select = -0.3;    
+    }
+    
+  cur_pol = getresult(current_mode_name,'TE polarization fraction');  
+  
+  selected = ((cur_pol*sign(polar_select))>polar_select);
+
+
+return selected;    
+    }
+    
+function mx_get_sys_time(){
+   system("notepad");
+   fname="cur_time.txt";    # file name to store current time
+   cmd="echo %time%  "+fname; # system command to get current time and write to fname 
+   rm(fname);          # delete time file
+   system(cmd);         # run command to get time and save to file
+
+   cur_time=read(fname);     # read time from file
+   return cur_time;    
+}
+
+#### @ result : {'neff','loss'} cell arrays #####
+function mx_get_mode_data(center_wl,mode_pol,mode_idx,wg_bend,results){
+        
+        run;
+        setanalysis('use max index',1);
+        setanalysis('number of trial modes',20);
+        setanalysis('wavelength',center_wl);
+        if (wg_bend>0) {
+            setanalysis('bent waveguide',1);
+            setanalysis('bend radius',wg_bend);
+            setanalysis('bend orientation',90);
+            }
+        else {
+            setanalysis('bent waveguide',0);       
+            }
+        
+        n_modes = findmodes;
+        idx_TE = 0;
+        idx_TM = 0;
+        idx_final = 0;
+        for (idx_n=1;idx_n<=n_modes;idx_n=idx_n+1){
+            cur_mode_name = 'FDE::data::mode'+num2str(idx_n);
+            
+            if (mode_polar_select('TE',cur_mode_name)){
+                    idx_TE = idx_TE+1;    
+                    if (idx_TE==(mode_idx+1) & (mode_pol == 'TE')){
+                        idx_final =    idx_n;
+                        idx_n = n_modes +1 ;                  
+                        } 
+                }        
+            if (mode_polar_select('TM',cur_mode_name)){
+                    idx_TM = idx_TM+1;
+                    if (idx_TM==(mode_idx+1) & (mode_pol == 'TM')){
+                        idx_final = idx_n;
+                        idx_n = n_modes +1 ;                   
+                        }      
+                }                
+            }
+        
+        final_data = struct;
+        final_mode_name = 'FDE::data::mode'+num2str(idx_final);
+        
+        for (idx_result=1;idx_result<=length(results);idx_result = idx_result+1){
+            temp = getdata(final_mode_name,results{idx_result});
+            ins = 'final_data.'+results{idx_result}+ '=temp;';
+            eval(ins);                
+            }
+            
+       return final_data;
+         
+}

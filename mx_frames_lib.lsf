@@ -1,0 +1,56 @@
+#####  FUNCTION LIB  #####
+function mx_FDE_dual_strip(wafer,w1,w2,gap){
+    
+    cladding = wafer.cladding;
+    mx_rect('WG_inner',[-w1/2-gap/2,0,0],[w1,10e-6,wafer.Height],wafer.Material,1,0);
+    mx_rect('WG_outer',[w2/2+gap/2,0,0],[w2,10e-6,wafer.Height],wafer.Material,1,0);
+    
+    if (wafer.clad_on){
+        mx_rect('SiO2',[0,0,0],[cladding.Size*2+w1+w2+gap,cladding.Size,cladding.Height],cladding.Material,2,0);
+        }
+    else  {
+        mx_rect('SiO2',[0,0,-cladding.Height/2-wafer.Height/2],[cladding.Size*2+w1+w2+gap,cladding.Size,cladding.Height],cladding.Material,2,0);
+        }
+    
+    #inner = wl+gap;
+    #outer = w2+gap;
+    #return [inner,outer];
+    }
+    
+function mx_FDE_strip(wafer,w){
+    
+    cladding = wafer.cladding;
+    mx_rect('WG',[0,0,0],[w,10e-6,wafer.Height],wafer.Material,1,0);
+    if (wafer.slab>=1e-10)    {
+        mx_rect('slab',[0,0,-wafer.Height/2+wafer.slab/2],[cladding.Size*2+w,cladding.Size,wafer.slab],wafer.Material,1,0);
+    }
+    if (wafer.clad_on){
+        mx_rect('SiO2',[0,0,0],[cladding.Size*2+w,cladding.Size,cladding.Height],cladding.Material,2,0);
+        }
+    else  {
+        mx_rect('SiO2',[0,0,-cladding.Height/2-wafer.Height/2],[cladding.Size*2+w,cladding.Size,cladding.Height],cladding.Material,2,0);
+        }
+    
+    #inner = wl+gap;
+    #outer = w2+gap;
+    #return [inner,outer];
+    }
+    
+#####  FUNCTION LIB  #####
+function mx_FDE_Disk(wafer,R){
+    
+    cladding = wafer.cladding;
+    mx_rect('Disk',[-R,0,0],[R*2,10e-6,wafer.Height],wafer.Material,1,0);
+        
+    if (wafer.clad_on){
+        mx_rect('SiO2',[0,0,0],[cladding.Size*2+R,cladding.Size,cladding.Height],cladding.Material,2,0);
+        }
+    else  {
+        mx_rect('SiO2',[0,0,-cladding.Height/2-wafer.Height/2],[cladding.Size*2+R,cladding.Size,cladding.Height],cladding.Material,2,0);
+        }
+    
+    #inner = wl+gap;
+    #outer = w2+gap;
+    #return [inner,outer];
+    }
+    

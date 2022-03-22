@@ -1,0 +1,206 @@
+## @ cord = [x,y,z] denotes a rectangle
+## @ cord_span = [xs,ys,zs] denotes a rectangle
+
+function mx_simu_area(name,coord,span,mesh_accuracy,meshs,boundary,time) {
+    
+    if((name=='FDTD')){             
+    addfdtd;
+    set('simulation time',time*1e-15);          
+
+        FDE_on = 0;
+    }
+    
+    else if ((name=='FDE_x')){
+        FDE_on = 1;
+        addfde;
+        set('solver type','2D X normal');  
+        span(1) = 0;   
+        } 
+
+    else if (name=='FDE_y'){
+        addfde;
+        FDE_on = 1;
+        set('solver type','2D Y normal');  
+        span(2) = 0;   
+        }     
+        
+    else if (name=='FDE_z'){
+        addfde;
+        FDE_on = 1;
+        set('solver type','2D Z normal');  
+        span(3) = 0;   
+        } 
+        
+        
+
+
+    x = coord(1);
+    y = coord(2);
+    z = coord(3);
+    
+    set('x',x);
+    set('y',y);
+    set('z',z);
+    
+    xs = span(1);
+    ys = span(2);
+    zs = span(3);
+    
+    if (xs>0) { 
+        set('x span',xs); 
+        set('x min bc',boundary);        
+        set('x max bc',boundary);
+        if (FDE_on)   {
+            set('define x mesh by','maximum mesh step');
+            set('dx',meshs(1));
+            }
+        }
+        
+    if (ys>0) { 
+        set('y span',ys);
+        set('y min bc',boundary);        
+        set('y max bc',boundary); 
+                if (FDE_on)   {
+            set('define y mesh by','maximum mesh step');
+            set('dz',meshs(2));
+            }
+        }  
+        
+    if (zs>0) {          
+        set('z span',zs);
+        set('z min bc',boundary);        
+        set('z max bc',boundary); 
+                if (FDE_on)   {
+            set('define z mesh by','maximum mesh step');
+            set('dz',meshs(3));
+            }   
+        }
+        
+   if (mesh_accuracy==0){
+        addmesh;
+        set('dx',meshs(1));
+        set('dy',meshs(2));
+        set('dz',meshs(3));
+        set('x',x);
+        set('y',y);
+        set('z',z);
+        
+        xs = span(1);
+        ys = span(2);
+        zs = span(3);
+        
+        set('x span',xs); 
+        set('y span',ys); 
+        set('z span',zs); 
+
+        }
+     else {
+        set('mesh accuracy',mesh_accuracy);     
+         }
+    
+}
+
+## 
+function mx_mode_source(name,coord,span,s_dir,theta,bend,mode_idx,wl){
+    addmode;
+    set('name',name);
+    set('injection axis',abs(s_dir));
+    set('direction',1.5-sign(s_dir)/2);
+
+    x = coord(1);
+    y = coord(2);
+    z = coord(3);
+    
+    set('x',x);
+    set('y',y);
+    set('z',z);
+    
+    xs = span(1)*((abs(s_dir))~=1);
+    ys = span(2)*((abs(s_dir))~=2);
+    zs = span(3)*((abs(s_dir))~=3);
+    
+    if (xs>0) { 
+        set('x span',xs); 
+        }
+        
+    if (ys>0) { 
+        set('y span',ys);
+        }  
+        
+    if (zs>0) {          
+        set('z span',zs);
+        }
+        
+   if (bend(1)>0){
+        set('bent waveguide',1);
+        set('bend orientation',bend(2)); 
+        set('bend radius',bend(1));
+                
+        }
+        else{
+        set('bent waveguide',0);        
+        }
+        
+    set('theta',theta);
+    set('theta',theta);
+    set('mode selection','user select');  
+    set('wavelength start',wl(1));
+    set('wavelength stop',wl(2));
+    
+    updatesourcemode(mode_idx);
+    
+    
+}
+
+## 
+function mx_mode_expansion(name,coord,span,m_dir,theta,bend,mode_idx,wl,monitor_name){
+    addmodeexpansion;
+    set('name',name);
+    set('monitor type',abs(m_dir));
+
+    x = coord(1);
+    y = coord(2);
+    z = coord(3);
+    
+    set('x',x);
+    set('y',y);
+    set('z',z);
+    
+    xs = span(1)*((abs(m_dir))~=1);
+    ys = span(2)*((abs(m_dir))~=2);
+    zs = span(3)*((abs(m_dir))~=3);
+    
+    if (xs>0) { 
+        set('x span',xs); 
+        }
+        
+    if (ys>0) { 
+        set('y span',ys);
+        }  
+        
+    if (zs>0) {          
+        set('z span',zs);
+        }
+    
+    if (bend(1)>0){
+        set('bent waveguide',1);
+        set('bend orientation',bend(2)); 
+        set('bend radius',bend(1));
+                
+        }
+        else{
+        set('bent waveguide',0);        
+        }
+        set('theta',theta);
+    set('mode selection','user select');  
+    
+    updatemodes(mode_idx);
+    
+    setexpansion('input',monitor_name);
+    
+    
+}
+
+
+
+

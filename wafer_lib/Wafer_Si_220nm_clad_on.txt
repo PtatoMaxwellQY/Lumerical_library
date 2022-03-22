@@ -1,0 +1,14 @@
+#### This is the database of wafers ####
+
+wafer = struct;
+wafer.Height = 220e-9;
+wafer.Material = 'Si (Silicon) - Palik';
+wafer.clad_on = 1;
+wafer.slab = 0e-9;
+
+cladding = struct;
+cladding.Height = 8e-6;
+cladding.Size = 20e-6;
+cladding.Material = 'SiO2 (Glass) - Palik';
+
+wafer.cladding = cladding;

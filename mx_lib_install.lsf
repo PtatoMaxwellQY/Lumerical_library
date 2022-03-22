@@ -1,0 +1,23 @@
+#### Lib Install ####
+
+PATH_LIB = ABSOLUTE_LIB_DIR;
+NAME_LIB_1 = 'mx_structures_lib.lsf';
+feval(PATH_LIB+NAME_LIB_1);
+
+NAME_LIB_2 = 'mx_simulation_lib.lsf';
+feval(PATH_LIB+NAME_LIB_2);
+
+NAME_LIB_3 = 'mx_function_lib.lsf';
+feval(PATH_LIB+NAME_LIB_3);
+
+NAME_LIB_4 = 'mx_analysis_lib.lsf';
+feval(PATH_LIB+NAME_LIB_4);
+
+NAME_LIB_5 = 'mx_frames_lib.lsf';
+feval(PATH_LIB+NAME_LIB_5);
+
+NAME_LIB_6 = 'mx_poly_spiral_lib.lsf';
+feval(PATH_LIB+NAME_LIB_6);
+
+NAME_LIB_7 = 'mx_devices_lib.lsf';
+feval(PATH_LIB+NAME_LIB_7);

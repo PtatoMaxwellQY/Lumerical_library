@@ -1,0 +1,210 @@
+function mx_sweep(sweeps,run_on){
+    
+    #addsweep(0);
+    
+    ## NOTICE : this can only be used in one-dimentional result calculation
+    ## NOTICE : such as [T .vs. lambda]
+    
+    #### @ sweeps: struct  ####
+    #### @ sweeps: [var_names={'width','radius','wavelength'...}] 
+    #### @ sweeps: width = [w1:dw:w2]
+    #### @         radius = [r1:dr:r2]
+    
+    addsweep(0);
+    sweep_name = 'mx_sweep';
+    deletesweep(sweep_name);
+    setsweep("sweep", "name", sweep_name);
+    setsweep(sweep_name,"type","Ranges");
+    
+    ins_temp = 'var_temp = sweeps.' + sweeps.var_names{1} + ';';
+    eval(ins_temp);
+    setsweep(sweep_name,"number of points",length(var_temp));
+    result_data = zeros(length(var_temp),length(sweeps.result_names));
+
+        
+    for (idx_vars=1;idx_vars<=length(sweeps.var_names);idx_vars=idx_vars+1){
+        
+        para = struct;
+        para.Name = sweeps.var_names{idx_vars};
+        para.Type = sweeps.var_types{idx_vars};
+        para.Parameter = sweeps.var_select{idx_vars};
+        
+        ins_temp = 'var_temp = sweeps.' + sweeps.var_names{idx_vars} + ';';
+        eval(ins_temp);        
+        
+        para.Start = var_temp(1);
+        para.Stop = var_temp(end);
+        addsweepparameter(sweep_name, para);
+
+        }
+        
+       for (idx_rsult=1;idx_rsult<=length(sweeps.result_names);idx_rsult=idx_rsult+1){
+        
+        result = struct;
+        result.Name = sweeps.result_names{idx_rsult};
+        result.Result = sweeps.result_select{idx_rsult};
+        addsweepresult(sweep_name, result);
+
+        }   
+            
+    if (run_on) {
+        
+        runsweep;
+        
+        for (idx_result=1;idx_result<=length(sweeps.result_names);idx_result=idx_result+1){
+            
+            result_data(:,idx_result) = getsweepdata(sweep_name,sweeps.result_names{idx_result});
+            } 
+                
+        }
+    ################################### RESULT ##################################################
+
+    
+    sweep_cur = sweeps;
+    sweep_cur.result = result_data;    
+
+    return sweep_cur;
+        
+    }
+    
+    
+##### FWM analysis lib #####
+
+##### FWM calculation pack #####
+##### @ freq_pump  : pumping frequency, vector of 1*2
+##### @ freq_signal: signal frequency, single scalar
+##### @ mode_idx   : vector of 1*4, [p,p,l,s] denoted
+##### @ mode_pol   : vector of 1*4, [p,p,l,s] denoted
+##### @ wg: struct of {width, bend radius}
+##### @ ONLY operates in FDE !!!! #####
+
+function mx_FWM_analysis(freq_pump,freq_signal,mode_idx,mode_pol,wg_bend){
+    #####  Select the target modes  #####
+    freq_idler = freq_pump(1) + freq_pump(2) - freq_signal;
+    freq_range = [freq_pump,freq_signal,freq_idler];
+    mode_neff = zeros(1,4);
+
+    for (idx_mode=1;idx_mode<=4;idx_mode=idx_mode+1){
+        
+        temp = mx_get_mode_data(c/freq_range(idx_mode),mode_pol{idx_mode},mode_idx(idx_mode),wg_bend,{'neff'});
+        mode_neff(idx_mode) = temp.neff;
+ 
+    }
+    
+    wavelengths = c/freq_range;
+    wl_neff = wavelengths/mode_neff;
+    k_vector = 2*pi/wl_neff;
+    phase_mismatch = sum(k_vector*[1,1,-1,-1]);
+    
+    return phase_mismatch;
+}
+
+
+##### Phase Matched Coupler calculation pack     #####
+##### NOTICE : this is coupled by TE0/TM0 by default #####
+
+function mx_DC_analysis(wafer,width_seed,wl,gap,neff,bend,outer_side,mode_pol){
+    
+    cur_file_name = currentfilename;
+    load('Temp_workspace.lms');
+    switchtolayout;
+    deleteall;
+    
+    cladding = wafer.cladding;
+    
+    max_itn = 5;
+    
+    mesh_grids = [20,20,20]*1e-9;
+
+    #####  Adding two waveguides to the strcuture  #####
+    mx_FDE_strip(wafer,width_seed);
+    
+    mx_simu_area('FDE_y',[0,0,0],[7e-6,10e-6,3e-6],2,mesh_grids,'Metal',10000);
+
+    width_cur = width_seed;
+    
+    neff_sweep = mx_get_mode_data(wl,mode_pol,0,bend,{'neff'});
+    run;
+    setanalysis('use max index',0);
+    setanalysis('n',neff_sweep.neff);    
+    findmodes;
+    
+    width_step = 0.002e-6;    
+    
+    for (itn=1;itn<=max_itn;itn=itn+1){
+        
+       
+        width_delta = [-0.01:0.002:0.01]*1e-6;   
+        width_sweep = width_cur+width_delta;  
+        
+        radius_sweep = width_sweep/2 + gap + outer_side;
+                
+        
+        #### Adding single sweep ####
+        if (bend>0){
+            sweeps = struct;
+            sweeps.var_names = {'width','radius'};
+            sweeps.radius = radius_sweep;
+            sweeps.width = width_sweep;
+            sweeps.var_select = {'::model::WG::x span','::model::FDE::bend radius'};
+            sweeps.var_types = {'Length','Length'};
+            sweeps.result_names = {'TE0_neff'};
+            sweeps.result_select = {'::model::FDE::data::mode1::neff'};
+            sweeps.bound_para_idx = [1,2];
+            neff_data = mx_sweep(sweeps,1);
+            neff_data = abs(neff_data.result);
+            mismatch = neff*bend - neff_data*radius_sweep;
+
+        }
+                else {
+            sweeps = struct;
+            sweeps.var_names = {'width'};
+            sweeps.width = width_sweep;
+            sweeps.var_select = {'::model::WG::x span'};
+            sweeps.var_types = {'Length'};
+            sweeps.result_names = {'TE0_neff'};
+            sweeps.result_select = {'::model::FDE::data::mode1::neff'};
+            sweeps.bound_para_idx = [1];
+            neff_data = mx_sweep(sweeps,1);
+            neff_data = abs(neff_data.result);
+                        mismatch = neff - neff_data;
+        }
+        
+        if ((mismatch(1)*mismatch(end)) <=0) {
+            idx_match = find(abs(mismatch) == min(abs(mismatch)));
+            itn = max_itn + 1;            
+            }
+        else {
+            
+            delta_match = mismatch(1) - mismatch(end);
+            cent_match = (mismatch(1) + mismatch(end))/2;
+            delta_width = (width_delta(1)-width_delta(end))/delta_match*cent_match;
+            width_cur = width_cur - delta_width;
+            width_cur = round(width_cur/width_step)*width_step;
+            print(width_cur);
+                
+        }
+        
+              
+        }
+    
+    #matched_width = width_sweep(idx_match);
+    return width_sweep(idx_match);
+    load(cur_file_name);
+    
+        
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+

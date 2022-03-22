@@ -1,0 +1,64 @@
+function mx_euler_racetrack(name,coord,euler_para,dLx,dLy,wafer)
+{
+
+    R1 = euler_para.R1;
+    R0 = euler_para.R0;
+    w1 = euler_para.w1;
+    w0 = euler_para.w0;
+    para = euler_para.para;
+    
+    ## generation of the single racetrack ##     
+    
+    e_curve_dr = mx_poly_spiral([R0,R1],[0,pi/4],[0,0],1,para);
+    e_curve_ur = mx_poly_spiral([R1,R0],[pi/4,pi/2],[e_curve_dr.x(end),e_curve_dr.y(end)],1,para);
+                        
+    dy = abs((e_curve_dr.y(end)))+abs((e_curve_dr.x(end)));
+    dx = abs((e_curve_dr.y(end)))+abs((e_curve_dr.x(end)));
+                    
+    e_curve = struct;
+    e_curve.x = [e_curve_dr.x,e_curve_ur.x(1,2:end)];
+    e_curve.y = -dy + [e_curve_dr.y,e_curve_ur.y(1,2:end)];
+                    
+    z = angle(e_curve.x + 1i*e_curve.y);
+                    
+    width = (w1-w0)*cos(2*z)/2 + (w0+w1)/2;
+                
+    wg = mx_wg_draw(e_curve,width);
+            
+    ## setting the ring to a group ##        
+    addstructuregroup;
+    set('name',name);
+    set('x',0);
+    set('y',0);
+    set('z',0);
+    vtx = [wg.curve_outer,flip(wg.curve_inner,2)];
+    mx_poly('euler',[dLx/2,-dLy/2,0],vtx,wafer.Height,wafer.Material,1,0); 
+    addtogroup(name);
+    vtx(2,:) = -vtx(2,:);
+    mx_poly('euler',[dLx/2,dLy/2,0],vtx,wafer.Height,wafer.Material,1,0); 
+    addtogroup(name);
+    vtx(1,:) = -vtx(1,:);
+    mx_poly('euler',[-dLx/2,dLy/2,0],vtx,wafer.Height,wafer.Material,1,0); 
+    addtogroup(name);
+    vtx(2,:) = -vtx(2,:);
+    mx_poly('euler',[-dLx/2,-dLy/2,0],vtx,wafer.Height,wafer.Material,1,0); 
+    addtogroup(name);
+    mx_rect('wg_d',[0,-dLy/2-dy,0],[dLx+2e-9,w0,wafer.Height],wafer.Material,1,0);
+    addtogroup(name);
+    mx_rect('wg_u',[0, dLy/2+dy,0],[dLx+2e-9,w0,wafer.Height],wafer.Material,1,0);
+    addtogroup(name);
+    mx_rect('wg_l',[-dLx/2-dx,0,0],[w1,dLy+2e-9,wafer.Height],wafer.Material,1,0);
+    addtogroup(name);
+    mx_rect('wg_r',[ dLx/2+dx,0,0],[w1,dLy+2e-9,wafer.Height],wafer.Material,1,0);
+    addtogroup(name);
+    
+    select(name);
+    set('x',coord(1));
+    set('y',coord(2));
+    set('z',coord(3));
+    
+    sz = [dLx+2*dx,dLy+2*dy];    
+    
+    return sz;
+    
+    }
